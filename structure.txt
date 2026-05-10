@@ -1,0 +1,147 @@
+eventtrack-laravel/                         ← Laravel root (run: composer create-project laravel/laravel eventtrack)
+│
+├── app/
+│   ├── Http/
+│   │   ├── Controllers/
+│   │   │   ├── Auth/
+│   │   │   │   ├── LoginController.php
+│   │   │   │   ├── RegisterController.php
+│   │   │   │   └── ForgotPasswordController.php
+│   │   │   ├── Admin/
+│   │   │   │   ├── DashboardController.php
+│   │   │   │   ├── UserController.php
+│   │   │   │   ├── EventController.php
+│   │   │   │   ├── CategoryController.php
+│   │   │   │   ├── VenueController.php
+│   │   │   │   ├── RegistrationController.php
+│   │   │   │   ├── AttendanceController.php
+│   │   │   │   ├── CertificateController.php
+│   │   │   │   └── ReportController.php
+│   │   │   ├── Organizer/
+│   │   │   │   ├── DashboardController.php
+│   │   │   │   ├── EventController.php
+│   │   │   │   ├── AttendanceController.php
+│   │   │   │   └── ReportController.php
+│   │   │   ├── Attendee/
+│   │   │   │   ├── DashboardController.php
+│   │   │   │   ├── EventController.php
+│   │   │   │   ├── RegistrationController.php
+│   │   │   │   └── CertificateController.php
+│   │   │   └── QrScanController.php
+│   │   ├── Middleware/
+│   │   │   ├── RoleMiddleware.php
+│   │   │   └── CheckEventCapacity.php
+│   │   └── Requests/
+│   │       ├── StoreEventRequest.php
+│   │       ├── StoreRegistrationRequest.php
+│   │       └── UpdateUserRequest.php
+│   ├── Models/
+│   │   ├── User.php
+│   │   ├── Event.php
+│   │   ├── Category.php
+│   │   ├── Venue.php
+│   │   ├── Registration.php
+│   │   ├── Attendance.php
+│   │   ├── Certificate.php
+│   │   ├── Notification.php
+│   │   └── ActivityLog.php
+│   ├── Services/
+│   │   ├── QrCodeService.php
+│   │   └── CertificateService.php
+│   └── Helpers/
+│       └── EventHelper.php
+│
+├── database/
+│   ├── migrations/
+│   │   ├── 2026_01_01_000001_create_users_table.php          ← extends Laravel default
+│   │   ├── 2026_01_01_000002_create_categories_table.php
+│   │   ├── 2026_01_01_000003_create_venues_table.php
+│   │   ├── 2026_01_01_000004_create_events_table.php
+│   │   ├── 2026_01_01_000005_create_registrations_table.php
+│   │   ├── 2026_01_01_000006_create_attendances_table.php
+│   │   ├── 2026_01_01_000007_create_certificates_table.php
+│   │   ├── 2026_01_01_000008_create_notifications_table.php
+│   │   └── 2026_01_01_000009_create_activity_logs_table.php
+│   └── seeders/
+│       ├── DatabaseSeeder.php
+│       ├── UserSeeder.php
+│       ├── CategorySeeder.php
+│       └── VenueSeeder.php
+│
+├── resources/
+│   └── views/
+│       ├── layouts/
+│       │   ├── app.blade.php                ← main layout with sidebar
+│       │   └── auth.blade.php               ← login/register layout
+│       ├── auth/
+│       │   ├── login.blade.php
+│       │   └── register.blade.php
+│       ├── admin/
+│       │   ├── dashboard.blade.php
+│       │   ├── users/
+│       │   │   ├── index.blade.php
+│       │   │   ├── create.blade.php
+│       │   │   └── edit.blade.php
+│       │   ├── events/
+│       │   │   ├── index.blade.php
+│       │   │   ├── create.blade.php
+│       │   │   └── edit.blade.php
+│       │   ├── categories/
+│       │   │   ├── index.blade.php
+│       │   │   └── create.blade.php
+│       │   ├── venues/
+│       │   │   ├── index.blade.php
+│       │   │   └── create.blade.php
+│       │   ├── registrations/
+│       │   │   └── index.blade.php
+│       │   ├── attendance/
+│       │   │   ├── index.blade.php
+│       │   │   └── scanner.blade.php
+│       │   ├── certificates/
+│       │   │   └── index.blade.php
+│       │   └── reports/
+│       │       └── index.blade.php
+│       ├── organizer/
+│       │   ├── dashboard.blade.php
+│       │   ├── events/
+│       │   │   ├── index.blade.php
+│       │   │   ├── create.blade.php
+│       │   │   └── edit.blade.php
+│       │   ├── attendance/
+│       │   │   └── scanner.blade.php
+│       │   └── reports/
+│       │       └── index.blade.php
+│       ├── attendee/
+│       │   ├── dashboard.blade.php
+│       │   ├── events/
+│       │   │   ├── browse.blade.php
+│       │   │   └── my-registrations.blade.php
+│       │   ├── qr-code/
+│       │   │   └── view.blade.php
+│       │   └── certificates/
+│       │       └── index.blade.php
+│       └── partials/
+│           ├── sidebar.blade.php
+│           ├── navbar.blade.php
+│           └── flash-messages.blade.php
+│
+├── routes/
+│   └── web.php                              ← ALL routes defined here
+│
+├── public/
+│   ├── css/
+│   │   └── style.css
+│   ├── js/
+│   │   ├── app.js
+│   │   └── qr-scanner.js
+│   └── uploads/                            ← symlinked from storage
+│
+├── storage/
+│   └── app/
+│       └── public/
+│           ├── qrcodes/
+│           ├── certificates/
+│           └── banners/
+│
+├── .env                                     ← DB config goes here
+└── composer.json
