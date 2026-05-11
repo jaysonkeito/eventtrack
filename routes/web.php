@@ -1,5 +1,5 @@
 <?php
-
+use App\Http\Controllers\Organizer\ReportController as OrganizerReportController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
@@ -103,6 +103,9 @@ Route::middleware(['auth', 'role:organizer'])
     Route::get('attendance/scanner',  [OrganizerAttendanceController::class, 'scanner'])->name('attendance.scanner');
     Route::post('attendance/scan',    [OrganizerAttendanceController::class, 'scan'])->name('attendance.scan');
     Route::get('attendance/records',  [OrganizerAttendanceController::class, 'records'])->name('attendance.records');
+
+    // Reports
+    Route::get('reports', [\App\Http\Controllers\Organizer\ReportController::class, 'index'])->name('reports.index');
 });
 
 // ── Attendee Routes ──────────────────────────────────────────

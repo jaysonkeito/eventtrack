@@ -1,0 +1,442 @@
+/* ============================================================
+   EventTrack — Global Stylesheet
+   ============================================================ */
+
+/* ── Variables ─────────────────────────────────────────────── */
+:root {
+    --et-primary:       #1A56A0;
+    --et-primary-dark:  #133d7a;
+    --et-primary-soft:  #D6E4F7;
+    --et-accent:        #F59E0B;
+    --et-success:       #16A34A;
+    --et-danger:        #DC2626;
+    --et-bg:            #F1F5FB;
+    --et-sidebar-bg:    #0F2744;
+    --et-sidebar-width: 260px;
+    --et-card-radius:   14px;
+    --et-font:          'Plus Jakarta Sans', sans-serif;
+    --et-shadow:        0 4px 24px rgba(26, 86, 160, 0.08);
+    --et-shadow-hover:  0 8px 32px rgba(26, 86, 160, 0.16);
+}
+
+/* ── Base ───────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+    font-family: var(--et-font);
+    background-color: var(--et-bg);
+    color: #1e293b;
+    margin: 0;
+}
+
+a { text-decoration: none; }
+
+/* ── Toast Alerts ───────────────────────────────────────────── */
+.toast-alert {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    min-width: 300px;
+    border-radius: 10px;
+    box-shadow: var(--et-shadow-hover);
+    animation: slideInRight 0.35s ease;
+}
+
+@keyframes slideInRight {
+    from { transform: translateX(120%); opacity: 0; }
+    to   { transform: translateX(0);   opacity: 1; }
+}
+
+/* ── Sidebar ────────────────────────────────────────────────── */
+.sidebar {
+    position: fixed;
+    top: 0; left: 0;
+    width: var(--et-sidebar-width);
+    height: 100vh;
+    background: var(--et-sidebar-bg);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    z-index: 1000;
+    transition: transform 0.3s ease;
+}
+
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px 20px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+
+.sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #fff;
+    font-size: 1.2rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+}
+
+.sidebar-brand i {
+    font-size: 1.5rem;
+    color: var(--et-accent);
+}
+
+.sidebar-user {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+
+.sidebar-avatar {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: var(--et-primary);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.sidebar-user-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #fff;
+    line-height: 1.2;
+}
+
+.sidebar-user-role { margin-top: 4px; }
+
+.sidebar-nav {
+    list-style: none;
+    padding: 12px 0;
+    margin: 0;
+    flex: 1;
+}
+
+.sidebar-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: rgba(255,255,255,0.35);
+    padding: 14px 20px 6px;
+}
+
+.sidebar-divider {
+    border-top: 1px solid rgba(255,255,255,0.07);
+    margin: 8px 0;
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    color: rgba(255,255,255,0.65);
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 0;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.sidebar-link:hover,
+.sidebar-link.active {
+    color: #fff;
+    background: rgba(255,255,255,0.08);
+}
+
+.sidebar-link.active::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--et-accent);
+    border-radius: 0 2px 2px 0;
+}
+
+.sidebar-link i { font-size: 1rem; width: 18px; }
+
+/* ── Main Content ───────────────────────────────────────────── */
+.main-content {
+    margin-left: var(--et-sidebar-width);
+    min-height: 100vh;
+    padding: 28px 32px;
+    transition: margin-left 0.3s ease;
+}
+
+/* ── Page Header ────────────────────────────────────────────── */
+.page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+}
+
+.page-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0;
+}
+
+.page-subtitle {
+    font-size: 0.85rem;
+    color: #64748b;
+    margin-top: 2px;
+}
+
+/* ── Cards ──────────────────────────────────────────────────── */
+.et-card {
+    background: #fff;
+    border-radius: var(--et-card-radius);
+    box-shadow: var(--et-shadow);
+    border: none;
+    transition: box-shadow 0.2s ease;
+}
+
+.et-card:hover { box-shadow: var(--et-shadow-hover); }
+
+.et-card .card-header {
+    background: transparent;
+    border-bottom: 1px solid #f1f5f9;
+    padding: 18px 24px;
+    font-weight: 700;
+    font-size: 1rem;
+    color: #0f172a;
+}
+
+.et-card .card-body { padding: 24px; }
+
+/* ── Stat Cards ─────────────────────────────────────────────── */
+.stat-card {
+    background: #fff;
+    border-radius: var(--et-card-radius);
+    padding: 24px;
+    box-shadow: var(--et-shadow);
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    transition: all 0.25s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--et-shadow-hover);
+}
+
+.stat-icon {
+    width: 54px; height: 54px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.stat-icon.blue   { background: #EFF6FF; color: var(--et-primary); }
+.stat-icon.green  { background: #F0FDF4; color: var(--et-success); }
+.stat-icon.amber  { background: #FFFBEB; color: var(--et-accent);  }
+.stat-icon.red    { background: #FEF2F2; color: var(--et-danger);  }
+
+.stat-value {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: #64748b;
+    font-weight: 500;
+    margin-top: 4px;
+}
+
+/* ── Tables ─────────────────────────────────────────────────── */
+.et-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.et-table thead th {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #64748b;
+    background: #f8fafc;
+    padding: 12px 16px;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.et-table tbody td {
+    padding: 14px 16px;
+    font-size: 0.875rem;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+}
+
+.et-table tbody tr:hover td { background: #f8fafc; }
+.et-table tbody tr:last-child td { border-bottom: none; }
+
+/* ── Buttons ────────────────────────────────────────────────── */
+.btn-et-primary {
+    background: var(--et-primary);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 9px 20px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.btn-et-primary:hover {
+    background: var(--et-primary-dark);
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+/* ── Badges ─────────────────────────────────────────────────── */
+.bg-primary-soft { background: var(--et-primary-soft) !important; color: var(--et-primary) !important; }
+
+/* ── Forms ──────────────────────────────────────────────────── */
+.form-control, .form-select {
+    border-radius: 8px;
+    border: 1.5px solid #e2e8f0;
+    font-size: 0.875rem;
+    padding: 10px 14px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--et-primary);
+    box-shadow: 0 0 0 3px rgba(26, 86, 160, 0.12);
+}
+
+.form-label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 6px;
+}
+
+/* ── Auth Pages ─────────────────────────────────────────────── */
+.auth-wrapper {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--et-sidebar-bg) 0%, #1A56A0 100%);
+    padding: 24px;
+}
+
+.auth-card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 48px 40px;
+    width: 100%;
+    max-width: 440px;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.2);
+}
+
+.auth-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 32px;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--et-primary);
+}
+
+.auth-logo i { font-size: 2rem; color: var(--et-accent); }
+
+.auth-title {
+    font-size: 1.4rem;
+    font-weight: 800;
+    text-align: center;
+    color: #0f172a;
+    margin-bottom: 6px;
+}
+
+.auth-subtitle {
+    font-size: 0.85rem;
+    text-align: center;
+    color: #64748b;
+    margin-bottom: 28px;
+}
+
+/* ── QR Scanner ─────────────────────────────────────────────── */
+.qr-scanner-container {
+    background: #0f172a;
+    border-radius: 20px;
+    padding: 32px;
+    text-align: center;
+    color: #fff;
+}
+
+#qr-video {
+    width: 100%;
+    max-width: 400px;
+    border-radius: 12px;
+    border: 3px solid var(--et-accent);
+}
+
+.qr-result {
+    margin-top: 20px;
+    padding: 16px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 991px) {
+    .sidebar {
+        transform: translateX(-100%);
+    }
+    .sidebar.show {
+        transform: translateX(0);
+    }
+    .main-content {
+        margin-left: 0;
+        padding: 20px 16px;
+    }
+}
+
+/* ── Top Navbar ─────────────────────────────────────────────── */
+.top-navbar {
+    display: flex;
+    align-items: center;
+    background: #fff;
+    padding: 12px 24px;
+    border-radius: var(--et-card-radius);
+    box-shadow: var(--et-shadow);
+    margin-bottom: 24px;
+}
+
+.sidebar-toggle-btn {
+    background: none;
+    border: none;
+    font-size: 1.4rem;
+    color: #64748b;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+}
+
+.sidebar-toggle-btn:hover { background: #f1f5f9; }
