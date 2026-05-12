@@ -12,6 +12,7 @@ class User extends Authenticatable
 
     protected $fillable = [
         'first_name', 'last_name', 'email', 'password',
+        'student_id', 'year_level', 'college', 'program',
         'phone', 'profile_pic', 'role', 'status', 'email_verified_at',
     ];
 
@@ -22,7 +23,7 @@ class User extends Authenticatable
         'password'          => 'hashed',
     ];
 
-    // ── Role Helpers ─────────────────────────────────────────
+    // ── Role Helpers ──────────────────────────────────────────
     public function isAdmin(): bool      { return $this->role === 'admin'; }
     public function isOrganizer(): bool  { return $this->role === 'organizer'; }
     public function isAttendee(): bool   { return $this->role === 'attendee'; }
@@ -43,28 +44,9 @@ class User extends Authenticatable
     }
 
     // ── Relationships ─────────────────────────────────────────
-    public function organizedEvents()
-    {
-        return $this->hasMany(Event::class, 'organizer_id');
-    }
-
-    public function registrations()
-    {
-        return $this->hasMany(Registration::class);
-    }
-
-    public function attendances()
-    {
-        return $this->hasMany(Attendance::class);
-    }
-
-    public function certificates()
-    {
-        return $this->hasMany(Certificate::class);
-    }
-
-    public function notifications()
-    {
-        return $this->hasMany(Notification::class);
-    }
+    public function organizedEvents()  { return $this->hasMany(Event::class, 'organizer_id'); }
+    public function registrations()    { return $this->hasMany(Registration::class); }
+    public function attendances()      { return $this->hasMany(Attendance::class); }
+    public function certificates()     { return $this->hasMany(Certificate::class); }
+    public function notifications()    { return $this->hasMany(Notification::class); }
 }
