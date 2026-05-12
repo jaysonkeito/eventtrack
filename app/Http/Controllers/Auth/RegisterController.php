@@ -4,10 +4,8 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules;
 
 class RegisterController extends Controller
 {
@@ -45,54 +43,104 @@ class RegisterController extends Controller
 
     public function showForm()
     {
-        $colleges = array_keys(self::$colleges);
-        $programs = self::$colleges;
-        return view('auth.register', compact('colleges', 'programs'));
+        return view('auth.register');
     }
 
     public function register(Request $request)
     {
-        $request->validate([
-            'first_name'  => ['required', 'string', 'max:100'],
-            'last_name'   => ['required', 'string', 'max:100'],
-            'email'       => ['required', 'string', 'email', 'max:150', 'unique:users'],
-            'student_id'  => ['nullable', 'string', 'max:20', 'unique:users,student_id'],
-            'year_level'  => ['nullable', 'string', 'max:20'],
-            'college'     => ['nullable', 'string', 'max:150'],
-            'program'     => ['nullable', 'string', 'max:255'],
-            'phone'       => ['nullable', 'string', 'max:20'],
-            'role'        => ['required', 'in:organizer,attendee'],
-            'password'    => ['required', 'confirmed', Rules\Password::defaults()],
-        ]);
+        $role = $request->input('role', 'attendee');
 
-        // Organizers need admin approval — set status to inactive
-        $status = $request->role === 'organizer' ? 'inactive' : 'active';
+        // ── STUDENT REGISTRATION ──────────────────────────────
+        if ($role === 'attendee') {
+            $request->validate([
+                'student_id' => ['required', 'string', 'max:20'],
+            ]);
 
-        $user = User::create([
-            'first_name' => $request->first_name,
-            'last_name'  => $request->last_name,
-            'email'      => $request->email,
-            'student_id' => $request->student_id,
-            'year_level' => $request->year_level,
-            'college'    => $request->college,
-            'program'    => $request->program,
-            'phone'      => $request->phone,
-            'password'   => Hash::make($request->password),
-            'role'       => $request->role,
-            'status'     => $status,
-        ]);
+            $studentId = trim($request->student_id);
 
-        // If organizer — don't log them in, show pending message
-        if ($request->role === 'organizer') {
+            // Find pre-registered student by admin
+            $student = User::where('student_id', $studentId)
+                           ->where('role', 'attendee')
+                           ->first();
+
+            if (!$student) {
+                return back()->withErrors([
+                    'student_id' => 'Student ID ' . $studentId . ' is not registered in the system. Please contact the administrator.',
+                ])->withInput();
+            }
+
+            if ($student->status === 'banned') {
+                return back()->withErrors([
+                    'student_id' => 'This account has been suspended.',
+                ])->withInput();
+            }
+
+            // Check if already self-registered (email already set)
+            if ($student->email_verified_at) {
+                return back()->withErrors([
+                    'student_id' => 'This Student ID has already been registered. Please log in instead.',
+                ])->withInput();
+            }
+
+            // Mark as verified/activated — they can now log in
+            $student->update([
+                'email_verified_at' => now(),
+                'status'            => 'active',
+            ]);
+
             return redirect()->route('login')
-                ->with('success', 'Your organizer account has been submitted for approval. You will be notified once approved by the admin.');
+                ->with('success', 'Your student account is ready! Log in using your Student ID and your last name as the default password.');
         }
 
-        // Attendee — log in immediately
-        event(new Registered($user));
-        auth()->login($user);
+        // ── ORGANIZER REGISTRATION ────────────────────────────
+        if ($role === 'organizer') {
+            $request->validate([
+                'student_id' => ['required', 'string', 'max:20'],
+                'email'      => ['required', 'email', 'max:150'],
+            ]);
 
-        return redirect()->route('attendee.dashboard')
-            ->with('success', 'Welcome to NORSU EventTrack, ' . $user->first_name . '!');
+            $studentId = trim($request->student_id);
+
+            // Must be a pre-registered student
+            $student = User::where('student_id', $studentId)
+                           ->where('role', 'attendee')
+                           ->first();
+
+            if (!$student) {
+                return back()->withErrors([
+                    'student_id' => 'Student ID ' . $studentId . ' is not registered in the system.',
+                ])->withInput();
+            }
+
+            // Check if already an organizer application exists
+            $existing = User::where('student_id', $studentId)
+                            ->where('role', 'organizer')
+                            ->first();
+
+            if ($existing) {
+                return back()->withErrors([
+                    'student_id' => 'An organizer application already exists for this Student ID.',
+                ])->withInput();
+            }
+
+            // Create organizer account (inactive = pending approval)
+            User::create([
+                'first_name' => $student->first_name,
+                'last_name'  => $student->last_name,
+                'email'      => trim($request->email),
+                'student_id' => $studentId . '-ORG',   // separate record
+                'year_level' => $student->year_level,
+                'college'    => $student->college,
+                'program'    => $student->program,
+                'password'   => Hash::make(strtolower($student->last_name)),
+                'role'       => 'organizer',
+                'status'     => 'inactive',             // pending admin approval
+            ]);
+
+            return redirect()->route('login')
+                ->with('success', 'Your organizer application has been submitted. You will be notified once approved by the admin. Default password will be your last name.');
+        }
+
+        return back()->with('error', 'Invalid registration type.');
     }
 }

@@ -51,11 +51,12 @@ Route::middleware(['auth', 'role:admin'])
 
     Route::get('/dashboard', [AdminDashboard::class, 'index'])->name('dashboard');
 
-    // Users CRUD + Organizer approval + CSV import
-    Route::resource('users', UserController::class);
-    Route::patch('users/{user}/approve', [UserController::class, 'approveOrganizer'])->name('users.approve');
+    // Users — IMPORTANT: specific routes before resource
+    Route::get('users/search',           [UserController::class, 'search'])->name('users.search');
     Route::get('users/import/upload',    [UserController::class, 'showUpload'])->name('users.upload');
     Route::post('users/import/process',  [UserController::class, 'processUpload'])->name('users.import');
+    Route::patch('users/{user}/approve', [UserController::class, 'approveOrganizer'])->name('users.approve');
+    Route::resource('users', UserController::class);
 
     // Events
     Route::resource('events', AdminEventController::class);
@@ -63,10 +64,10 @@ Route::middleware(['auth', 'role:admin'])
 
     // Categories & Venues
     Route::resource('categories', CategoryController::class);
-    Route::resource('venues', VenueController::class);
+    Route::resource('venues',     VenueController::class);
 
     // Registrations
-    Route::get('registrations', [AdminRegistrationController::class, 'index'])->name('registrations.index');
+    Route::get('registrations',                          [AdminRegistrationController::class, 'index'])->name('registrations.index');
     Route::patch('registrations/{registration}/approve', [AdminRegistrationController::class, 'approve'])->name('registrations.approve');
     Route::patch('registrations/{registration}/reject',  [AdminRegistrationController::class, 'reject'])->name('registrations.reject');
 
@@ -110,15 +111,15 @@ Route::middleware(['auth', 'role:attendee'])
 
     Route::get('/dashboard', [AttendeeDashboard::class, 'index'])->name('dashboard');
 
-    Route::get('events',                    [AttendeeEventController::class, 'browse'])->name('events.browse');
-    Route::get('events/{event}',            [AttendeeEventController::class, 'show'])->name('events.show');
-    Route::post('events/{event}/register',  [AttendeeRegistrationController::class, 'store'])->name('registrations.store');
-    Route::get('my-registrations',          [AttendeeRegistrationController::class, 'index'])->name('registrations.index');
-    Route::delete('registrations/{registration}/cancel', [AttendeeRegistrationController::class, 'cancel'])->name('registrations.cancel');
-    Route::get('qr-code/{registration}',    [AttendeeRegistrationController::class, 'qrCode'])->name('qr.show');
+    Route::get('events',                         [AttendeeEventController::class, 'browse'])->name('events.browse');
+    Route::get('events/{event}',                 [AttendeeEventController::class, 'show'])->name('events.show');
+    Route::post('events/{event}/register',       [AttendeeRegistrationController::class, 'store'])->name('registrations.store');
+    Route::get('my-registrations',               [AttendeeRegistrationController::class, 'index'])->name('registrations.index');
+    Route::delete('registrations/{reg}/cancel',  [AttendeeRegistrationController::class, 'cancel'])->name('registrations.cancel');
+    Route::get('qr-code/{registration}',         [AttendeeRegistrationController::class, 'qrCode'])->name('qr.show');
 
-    Route::get('certificates',                     [AttendeeCertificateController::class, 'index'])->name('certificates.index');
-    Route::get('certificates/{cert}/download',     [AttendeeCertificateController::class, 'download'])->name('certificates.download');
+    Route::get('certificates',                   [AttendeeCertificateController::class, 'index'])->name('certificates.index');
+    Route::get('certificates/{cert}/download',   [AttendeeCertificateController::class, 'download'])->name('certificates.download');
 });
 
 // ── QR Scan API ───────────────────────────────────────────────

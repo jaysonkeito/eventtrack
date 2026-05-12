@@ -12,21 +12,39 @@ class UserController extends Controller
 {
     public function index(Request $request)
     {
-        $users = User::when($request->role, fn($q) => $q->where('role', $request->role))
-            ->when($request->status, fn($q) => $q->where('status', $request->status))
+        $users = User::when($request->role,    fn($q) => $q->where('role', $request->role))
+            ->when($request->status,  fn($q) => $q->where('status', $request->status))
             ->when($request->college, fn($q) => $q->where('college', $request->college))
-            ->when($request->search, fn($q) => $q->where(function($q) use ($request) {
+            ->when($request->search,  fn($q) => $q->where(function ($q) use ($request) {
                 $q->where('first_name', 'like', '%'.$request->search.'%')
-                  ->orWhere('last_name', 'like', '%'.$request->search.'%')
-                  ->orWhere('student_id', 'like', '%'.$request->search.'%')
-                  ->orWhere('email', 'like', '%'.$request->search.'%');
+                  ->orWhere('last_name',   'like', '%'.$request->search.'%')
+                  ->orWhere('student_id',  'like', '%'.$request->search.'%')
+                  ->orWhere('email',       'like', '%'.$request->search.'%');
             }))
-            ->latest()->paginate(15);
+            ->latest()->paginate(15)->withQueryString();
 
         $pendingOrganizers = User::where('role', 'organizer')->where('status', 'inactive')->count();
-        $colleges = array_keys(RegisterController::$colleges);
+        $colleges          = array_keys(RegisterController::$colleges);
 
         return view('admin.users.index', compact('users', 'pendingOrganizers', 'colleges'));
+    }
+
+    // ── AJAX Live Search ──────────────────────────────────────
+    public function search(Request $request)
+    {
+        $q     = $request->get('q', '');
+        $role  = $request->get('role', '');
+        $users = User::where(function ($query) use ($q) {
+                $query->where('first_name', 'like', "%$q%")
+                      ->orWhere('last_name',  'like', "%$q%")
+                      ->orWhere('student_id', 'like', "%$q%")
+                      ->orWhere('email',      'like', "%$q%");
+            })
+            ->when($role, fn($query) => $query->where('role', $role))
+            ->limit(20)
+            ->get(['id', 'first_name', 'last_name', 'student_id', 'email', 'role', 'status', 'college', 'program', 'year_level']);
+
+        return response()->json($users);
     }
 
     public function create()
@@ -40,30 +58,32 @@ class UserController extends Controller
         $request->validate([
             'first_name' => 'required|string|max:100',
             'last_name'  => 'required|string|max:100',
-            'email'      => 'required|email|unique:users',
-            'student_id' => 'nullable|string|max:20|unique:users,student_id',
-            'password'   => 'required|min:8|confirmed',
+            'student_id' => 'required|string|max:20|unique:users,student_id',
             'role'       => 'required|in:admin,organizer,attendee',
             'college'    => 'nullable|string|max:150',
             'program'    => 'nullable|string|max:255',
             'year_level' => 'nullable|string|max:20',
         ]);
 
+        // Default password = last name (lowercase)
+        $defaultPassword = strtolower(trim($request->last_name));
+
         User::create([
-            'first_name' => $request->first_name,
-            'last_name'  => $request->last_name,
-            'email'      => $request->email,
-            'student_id' => $request->student_id,
+            'first_name' => trim($request->first_name),
+            'last_name'  => trim($request->last_name),
+            'email'      => $request->email ?? strtolower(str_replace(' ', '', $request->first_name . '.' . $request->last_name)) . '@norsu.edu.ph',
+            'student_id' => trim($request->student_id),
             'year_level' => $request->year_level,
             'college'    => $request->college,
             'program'    => $request->program,
             'phone'      => $request->phone,
-            'password'   => Hash::make($request->password),
+            'password'   => Hash::make($defaultPassword),
             'role'       => $request->role,
             'status'     => 'active',
         ]);
 
-        return redirect()->route('admin.users.index')->with('success', 'User created successfully!');
+        return redirect()->route('admin.users.index')
+            ->with('success', 'Student added! Default password is their last name (lowercase).');
     }
 
     public function edit(User $user)
@@ -77,17 +97,17 @@ class UserController extends Controller
         $request->validate([
             'first_name' => 'required|string|max:100',
             'last_name'  => 'required|string|max:100',
-            'email'      => 'required|email|unique:users,email,'.$user->id,
+            'email'      => 'nullable|email|unique:users,email,'.$user->id,
             'student_id' => 'nullable|string|max:20|unique:users,student_id,'.$user->id,
             'role'       => 'required|in:admin,organizer,attendee',
             'status'     => 'required|in:active,inactive,banned',
         ]);
 
         $user->update([
-            'first_name' => $request->first_name,
-            'last_name'  => $request->last_name,
+            'first_name' => trim($request->first_name),
+            'last_name'  => trim($request->last_name),
             'email'      => $request->email,
-            'student_id' => $request->student_id,
+            'student_id' => trim($request->student_id),
             'year_level' => $request->year_level,
             'college'    => $request->college,
             'program'    => $request->program,
@@ -100,7 +120,7 @@ class UserController extends Controller
             $user->update(['password' => Hash::make($request->password)]);
         }
 
-        return redirect()->route('admin.users.index')->with('success', 'User updated!');
+        return redirect()->route('admin.users.index')->with('success', 'User updated successfully!');
     }
 
     public function destroy(User $user)
@@ -116,10 +136,10 @@ class UserController extends Controller
     public function approveOrganizer(User $user)
     {
         $user->update(['status' => 'active']);
-        return back()->with('success', $user->full_name . ' has been approved as an Organizer!');
+        return back()->with('success', $user->full_name . ' has been approved as Organizer!');
     }
 
-    // ── CSV Upload for Students ───────────────────────────────
+    // ── CSV Upload ────────────────────────────────────────────
     public function showUpload()
     {
         return view('admin.users.upload');
@@ -127,57 +147,44 @@ class UserController extends Controller
 
     public function processUpload(Request $request)
     {
-        $request->validate([
-            'csv_file' => 'required|file|mimes:csv,txt|max:5120',
-        ]);
+        $request->validate(['csv_file' => 'required|file|mimes:csv,txt|max:5120']);
 
-        $file    = $request->file('csv_file');
-        $handle  = fopen($file->getRealPath(), 'r');
-        $header  = fgetcsv($handle); // skip header row
-
+        $handle  = fopen($request->file('csv_file')->getRealPath(), 'r');
+        $header  = fgetcsv($handle); // skip header
         $created = 0;
         $skipped = 0;
-        $errors  = [];
 
         while (($row = fgetcsv($handle)) !== false) {
-            if (count($row) < 5) { $skipped++; continue; }
-
-            [$studentId, $firstName, $lastName, $yearLevel, $college, $program, $email] = array_pad($row, 7, '');
+            if (count($row) < 3) { $skipped++; continue; }
+            [$studentId, $firstName, $lastName, $yearLevel, $college, $program] = array_pad($row, 6, '');
 
             $studentId = trim($studentId);
-            $email     = trim($email) ?: strtolower(str_replace(' ', '', $firstName . '.' . $lastName)) . '@norsu.edu.ph';
+            $lastName  = trim($lastName);
 
-            // Skip duplicates
-            if (User::where('student_id', $studentId)->orWhere('email', $email)->exists()) {
-                $skipped++;
-                continue;
-            }
+            if (User::where('student_id', $studentId)->exists()) { $skipped++; continue; }
 
             try {
                 User::create([
                     'first_name' => trim($firstName),
-                    'last_name'  => trim($lastName),
-                    'email'      => $email,
+                    'last_name'  => $lastName,
+                    'email'      => strtolower(str_replace(' ', '', $firstName . '.' . $lastName)) . '@norsu.edu.ph',
                     'student_id' => $studentId,
                     'year_level' => trim($yearLevel),
                     'college'    => trim($college),
                     'program'    => trim($program),
-                    'password'   => Hash::make($studentId ?: 'norsu1234'),
+                    'password'   => Hash::make(strtolower($lastName)),
                     'role'       => 'attendee',
                     'status'     => 'active',
                 ]);
                 $created++;
             } catch (\Exception $e) {
-                $errors[] = "Row error: " . $e->getMessage();
                 $skipped++;
             }
         }
 
         fclose($handle);
 
-        $msg = "Import complete: {$created} students added, {$skipped} skipped.";
-        if ($errors) $msg .= ' Some rows had errors.';
-
-        return redirect()->route('admin.users.index')->with('success', $msg);
+        return redirect()->route('admin.users.index')
+            ->with('success', "Import complete: {$created} students added, {$skipped} skipped.");
     }
 }
