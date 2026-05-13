@@ -13,6 +13,11 @@
             <div class="sidebar-user-role">
                 <span class="badge bg-primary-soft">{{ ucfirst(auth()->user()->role) }}</span>
             </div>
+            @if(auth()->user()->student_id)
+            <div style="font-size:0.7rem;color:rgba(255,255,255,0.4);margin-top:2px;font-family:monospace;">
+                {{ auth()->user()->student_id }}
+            </div>
+            @endif
         </div>
     </div>
 
@@ -116,6 +121,12 @@
             <li class="sidebar-item">
                 <a href="{{ route('attendee.certificates.index') }}" class="sidebar-link {{ request()->routeIs('attendee.certificates.*') ? 'active' : '' }}">
                     <i class="bi bi-award"></i> My Certificates
+                </a>
+            </li>
+            <li class="sidebar-label">Account</li>
+            <li class="sidebar-item">
+                <a href="{{ route('attendee.profile') }}" class="sidebar-link {{ request()->routeIs('attendee.profile') ? 'active' : '' }}">
+                    <i class="bi bi-person-circle"></i> My Profile
                 </a>
             </li>
         @endif

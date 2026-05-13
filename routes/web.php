@@ -21,6 +21,7 @@ use App\Http\Controllers\Attendee\DashboardController as AttendeeDashboard;
 use App\Http\Controllers\Attendee\EventController as AttendeeEventController;
 use App\Http\Controllers\Attendee\RegistrationController as AttendeeRegistrationController;
 use App\Http\Controllers\Attendee\CertificateController as AttendeeCertificateController;
+use App\Http\Controllers\Attendee\ProfileController as AttendeeProfileController;
 use App\Http\Controllers\QrScanController;
 
 // ── Public Landing Page ──────────────────────────────────────
@@ -51,7 +52,7 @@ Route::middleware(['auth', 'role:admin'])
 
     Route::get('/dashboard', [AdminDashboard::class, 'index'])->name('dashboard');
 
-    // Users — IMPORTANT: specific routes before resource
+    // Users — specific routes BEFORE resource to avoid conflicts
     Route::get('users/search',           [UserController::class, 'search'])->name('users.search');
     Route::get('users/import/upload',    [UserController::class, 'showUpload'])->name('users.upload');
     Route::post('users/import/process',  [UserController::class, 'processUpload'])->name('users.import');
@@ -111,15 +112,23 @@ Route::middleware(['auth', 'role:attendee'])
 
     Route::get('/dashboard', [AttendeeDashboard::class, 'index'])->name('dashboard');
 
-    Route::get('events',                         [AttendeeEventController::class, 'browse'])->name('events.browse');
-    Route::get('events/{event}',                 [AttendeeEventController::class, 'show'])->name('events.show');
-    Route::post('events/{event}/register',       [AttendeeRegistrationController::class, 'store'])->name('registrations.store');
-    Route::get('my-registrations',               [AttendeeRegistrationController::class, 'index'])->name('registrations.index');
-    Route::delete('registrations/{reg}/cancel',  [AttendeeRegistrationController::class, 'cancel'])->name('registrations.cancel');
-    Route::get('qr-code/{registration}',         [AttendeeRegistrationController::class, 'qrCode'])->name('qr.show');
+    // Events
+    Route::get('events',                       [AttendeeEventController::class, 'browse'])->name('events.browse');
+    Route::get('events/{event}',               [AttendeeEventController::class, 'show'])->name('events.show');
 
-    Route::get('certificates',                   [AttendeeCertificateController::class, 'index'])->name('certificates.index');
-    Route::get('certificates/{cert}/download',   [AttendeeCertificateController::class, 'download'])->name('certificates.download');
+    // Registrations
+    Route::post('events/{event}/register',     [AttendeeRegistrationController::class, 'store'])->name('registrations.store');
+    Route::get('my-registrations',             [AttendeeRegistrationController::class, 'index'])->name('registrations.index');
+    Route::delete('registrations/{reg}/cancel',[AttendeeRegistrationController::class, 'cancel'])->name('registrations.cancel');
+    Route::get('qr-code/{registration}',       [AttendeeRegistrationController::class, 'qrCode'])->name('qr.show');
+
+    // Certificates
+    Route::get('certificates',                 [AttendeeCertificateController::class, 'index'])->name('certificates.index');
+    Route::get('certificates/{cert}/download', [AttendeeCertificateController::class, 'download'])->name('certificates.download');
+
+    // Profile (once per month edit)
+    Route::get('profile',  [AttendeeProfileController::class, 'show'])->name('profile');
+    Route::put('profile',  [AttendeeProfileController::class, 'update'])->name('profile.update');
 });
 
 // ── QR Scan API ───────────────────────────────────────────────

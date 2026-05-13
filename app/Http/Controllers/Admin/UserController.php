@@ -32,8 +32,9 @@ class UserController extends Controller
     // ── AJAX Live Search ──────────────────────────────────────
     public function search(Request $request)
     {
-        $q     = $request->get('q', '');
-        $role  = $request->get('role', '');
+        $q    = $request->get('q', '');
+        $role = $request->get('role', '');
+
         $users = User::where(function ($query) use ($q) {
                 $query->where('first_name', 'like', "%$q%")
                       ->orWhere('last_name',  'like', "%$q%")
@@ -42,7 +43,8 @@ class UserController extends Controller
             })
             ->when($role, fn($query) => $query->where('role', $role))
             ->limit(20)
-            ->get(['id', 'first_name', 'last_name', 'student_id', 'email', 'role', 'status', 'college', 'program', 'year_level']);
+            ->get(['id', 'first_name', 'last_name', 'student_id',
+                   'email', 'role', 'status', 'college', 'program', 'year_level']);
 
         return response()->json($users);
     }
@@ -55,7 +57,9 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $isStudent = $request->role === 'attendee';
+
+        $rules = [
             'first_name' => 'required|string|max:100',
             'last_name'  => 'required|string|max:100',
             'student_id' => 'required|string|max:20|unique:users,student_id',
@@ -63,27 +67,55 @@ class UserController extends Controller
             'college'    => 'nullable|string|max:150',
             'program'    => 'nullable|string|max:255',
             'year_level' => 'nullable|string|max:20',
-        ]);
+            'phone'      => 'nullable|string|max:20',
+        ];
 
-        // Default password = last name (lowercase)
-        $defaultPassword = strtolower(trim($request->last_name));
+        // Email optional for students, required for admin/organizer
+        if ($isStudent) {
+            $rules['email']    = 'nullable|email|unique:users,email';
+            $rules['password'] = 'nullable|min:4|confirmed';
+        } else {
+            $rules['email']    = 'required|email|unique:users,email';
+            $rules['password'] = 'required|min:8|confirmed';
+        }
+
+        $request->validate($rules);
+
+        $lastName = trim($request->last_name);
+
+        // ── Password logic ────────────────────────────────────
+        // Always stored as lowercase, whether default or custom
+        if ($request->filled('password')) {
+            $passwordToStore = Hash::make(strtolower($request->password));
+        } else {
+            // Default = last name in lowercase
+            $passwordToStore = Hash::make(strtolower($lastName));
+        }
+
+        // ── Email fallback for students ───────────────────────
+        $email = $request->filled('email')
+            ? $request->email
+            : strtolower(str_replace(' ', '', $request->first_name . '.' . $lastName)) . '@norsu.edu.ph';
 
         User::create([
             'first_name' => trim($request->first_name),
-            'last_name'  => trim($request->last_name),
-            'email'      => $request->email ?? strtolower(str_replace(' ', '', $request->first_name . '.' . $request->last_name)) . '@norsu.edu.ph',
+            'last_name'  => $lastName,
+            'email'      => $email,
             'student_id' => trim($request->student_id),
             'year_level' => $request->year_level,
             'college'    => $request->college,
             'program'    => $request->program,
             'phone'      => $request->phone,
-            'password'   => Hash::make($defaultPassword),
+            'password'   => $passwordToStore,
             'role'       => $request->role,
             'status'     => 'active',
         ]);
 
-        return redirect()->route('admin.users.index')
-            ->with('success', 'Student added! Default password is their last name (lowercase).');
+        $msg = $isStudent
+            ? "Student added! Default password is \"" . strtolower($lastName) . "\" (last name, lowercase)."
+            : 'Account created successfully!';
+
+        return redirect()->route('admin.users.index')->with('success', $msg);
     }
 
     public function edit(User $user)
@@ -117,7 +149,7 @@ class UserController extends Controller
         ]);
 
         if ($request->filled('password')) {
-            $user->update(['password' => Hash::make($request->password)]);
+            $user->update(['password' => Hash::make(strtolower($request->password))]);
         }
 
         return redirect()->route('admin.users.index')->with('success', 'User updated successfully!');
@@ -132,14 +164,12 @@ class UserController extends Controller
         return redirect()->route('admin.users.index')->with('success', 'User deleted!');
     }
 
-    // ── Approve Organizer ─────────────────────────────────────
     public function approveOrganizer(User $user)
     {
         $user->update(['status' => 'active']);
         return back()->with('success', $user->full_name . ' has been approved as Organizer!');
     }
 
-    // ── CSV Upload ────────────────────────────────────────────
     public function showUpload()
     {
         return view('admin.users.upload');
@@ -150,7 +180,7 @@ class UserController extends Controller
         $request->validate(['csv_file' => 'required|file|mimes:csv,txt|max:5120']);
 
         $handle  = fopen($request->file('csv_file')->getRealPath(), 'r');
-        $header  = fgetcsv($handle); // skip header
+        $header  = fgetcsv($handle);
         $created = 0;
         $skipped = 0;
 
@@ -167,7 +197,7 @@ class UserController extends Controller
                 User::create([
                     'first_name' => trim($firstName),
                     'last_name'  => $lastName,
-                    'email'      => strtolower(str_replace(' ', '', $firstName . '.' . $lastName)) . '@norsu.edu.ph',
+                    'email'      => strtolower(str_replace(' ', '', trim($firstName) . '.' . $lastName)) . '@norsu.edu.ph',
                     'student_id' => $studentId,
                     'year_level' => trim($yearLevel),
                     'college'    => trim($college),
@@ -185,6 +215,6 @@ class UserController extends Controller
         fclose($handle);
 
         return redirect()->route('admin.users.index')
-            ->with('success', "Import complete: {$created} students added, {$skipped} skipped.");
+            ->with('success', "Import complete: {$created} students added, {$skipped} skipped. Default password is each student's last name (lowercase).");
     }
 }

@@ -23,10 +23,12 @@ class LoginController extends Controller
         ]);
 
         $loginId  = trim($request->login_id);
-        $password = $request->password;
+        // ── Always lowercase the password before matching ─────
+        // This means students can type "Francisco" or "FRANCISCO"
+        // and it will still match the stored lowercase hash
+        $password = strtolower(trim($request->password));
 
-        // ── Determine if input is email or student ID ─────────
-        $isEmail = filter_var($loginId, FILTER_VALIDATE_EMAIL);
+        $isEmail  = filter_var($loginId, FILTER_VALIDATE_EMAIL);
 
         if ($isEmail) {
             // Admin and Organizer login via email
@@ -47,16 +49,18 @@ class LoginController extends Controller
 
             if (!$user) {
                 return back()->withErrors([
-                    'login_id' => 'No student account found with that Student ID.',
+                    'login_id' => 'Student ID not found. Please check your ID or contact the administrator.',
                 ])->onlyInput('login_id');
             }
         }
 
-        // ── Check password ────────────────────────────────────
+        // ── Check password (always compared as lowercase) ─────
         if (!Hash::check($password, $user->password)) {
-            return back()->withErrors([
-                'login_id' => 'Incorrect password. Default password is your last name.',
-            ])->onlyInput('login_id');
+            $hint = $isEmail
+                ? 'Incorrect password.'
+                : 'Incorrect password. Default password is your last name in lowercase (e.g. "' . strtolower($user->last_name) . '").';
+
+            return back()->withErrors(['login_id' => $hint])->onlyInput('login_id');
         }
 
         // ── Check account status ──────────────────────────────
@@ -68,7 +72,7 @@ class LoginController extends Controller
 
         if ($user->status === 'banned') {
             return back()->withErrors([
-                'login_id' => 'Your account has been suspended. Contact the administrator.',
+                'login_id' => 'Your account has been suspended. Please contact the administrator.',
             ])->onlyInput('login_id');
         }
 
